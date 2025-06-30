@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Little Lemon - Book a Table</title>
+    <!-- Tailwind CSS CDN for utility-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and any specific overrides */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFCEE; /* Light yellow background, similar to lemon */
+            color: #333;
+        }
+
+        /* Modal styles - overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black overlay */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000; /* Ensure it's on top of other content */
+        }
+
+        /* Modal styles - content box */
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            position: relative;
+            transform: scale(0.95); /* Slightly smaller initially */
+            opacity: 0; /* Hidden initially */
+            transition: all 0.3s ease-out; /* Smooth transition for appearance */
+        }
+
+        .modal-content.show {
+            transform: scale(1); /* Scale to normal size */
+            opacity: 1; /* Fully visible */
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #6B7280; /* text-gray-500 */
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .modal-close-button:hover {
+            color: #374151; /* text-gray-700 */
+        }
+    </style>
+    <!-- Link to the external CSS file (for potential custom styles) -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl max-w-lg w-full transform transition-all hover:scale-105 duration-300">
+        <h1 class="text-4xl font-bold text-center mb-6 text-yellow-600">Book Your Table at Little Lemon</h1>
+        <p class="text-center text-gray-700 mb-8">
+            Experience the taste of fresh, zesty flavors. Reserve your spot today!
+        </p>
+
+        <form id="bookingForm" class="space-y-6">
+            <!-- Date Input -->
+            <div>
+                <label for="resDate" class="block text-sm font-medium text-gray-700 mb-1">Choose Date:</label>
+                <input type="date" id="resDate" name="resDate"
+                       min="2025-06-30" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out">
+            </div>
+
+            <!-- Time Input -->
+            <div>
+                <label for="resTime" class="block text-sm font-medium text-gray-700 mb-1">Choose Time:</label>
+                <select id="resTime" name="resTime" required
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out">
+                    <option value="">Select a time</option>
+                    <option value="17:00">17:00</option>
+                    <option value="18:00">18:00</option>
+                    <option value="19:00">19:00</option>
+                    <option value="20:00">20:00</option>
+                    <option value="21:00">21:00</option>
+                    <option value="22:00">22:00</option>
+                </select>
+            </div>
+
+            <!-- Number of Guests Input -->
+            <div>
+                <label for="guests" class="block text-sm font-medium text-gray-700 mb-1">Number of Guests:</label>
+                <input type="number" id="guests" name="guests"
+                       placeholder="1-10" min="1" max="10" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out">
+            </div>
+
+            <!-- Occasion Input -->
+            <div>
+                <label for="occasion" class="block text-sm font-medium text-gray-700 mb-1">Occasion:</label>
+                <select id="occasion" name="occasion"
+                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out">
+                    <option value="">Select an occasion (optional)</option>
+                    <option value="birthday">Birthday</option>
+                    <option value="anniversary">Anniversary</option>
+                    <option value="engagement">Engagement</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition duration-150 ease-in-out transform hover:scale-105 active:scale-100">
+                Find a Table
+            </button>
+        </form>
+
+        <!-- Message Box for General Confirmation/Errors -->
+        <div id="messageBox" class="mt-6 p-4 rounded-md text-center hidden"></div>
+
+        <!-- Table Suggestions Container -->
+        <div id="tableSuggestionsContainer" class="mt-8 pt-6 border-t border-gray-200 hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-yellow-600">Available Tables</h2>
+            <div id="tableOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Table suggestions will be dynamically inserted here by JavaScript -->
+            </div>
+            <button id="resetBookingButton"
+                    class="mt-6 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">
+                Start New Search
+            </button>
+        </div>
+    </div>
+
+    <!-- Booking Confirmation Modal -->
+    <div id="bookingConfirmationModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-button" onclick="closeModal()">×</button>
+            <h2 class="text-3xl font-bold text-green-600 mb-4">Booking Confirmed!</h2>
+            <p id="modalMessage" class="text-gray-700 text-lg mb-6"></p>
+            <p class="text-sm text-gray-500">
+                Thank you for choosing Little Lemon. We look forward to serving you!
+            </p>
+        </div>
+    </div>
+
+    <!-- Link to the external JavaScript file -->
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+/* Custom styles for Little Lemon Booking Form */
+
+/* Import the Inter font - also handled in HTML head */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Basic reset or global styles if needed, though Tailwind provides a good base */
+body {
+    font-family: 'Inter', sans-serif;
+    /* Background and text color are set via Tailwind classes in HTML body */
+}
+
+/* You can add more specific custom CSS here that Tailwind utility classes don't cover */
+/* For example, if you wanted a very specific shadow or animation not easily done with Tailwind */
+/*
+.custom-shadow {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+*/
