@@ -1,13 +1,9 @@
-// ================================
-// GLOBAL STATE & INITIALIZATION
-// ================================
-
 // Load cart state from local storage or initialize as empty array
 let cart = JSON.parse(localStorage.getItem('littleLemonCart')) || [];
 
-// ================================
+
 // DOM ELEMENT REFERENCES
-// ================================
+
 
 const menuToggle = document.getElementById('menuToggle');
 const navMenu = document.getElementById('navMenu');
@@ -31,9 +27,9 @@ const cartTotalElement = document.getElementById('cartTotal');
 const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
 
 
-// ================================
+
 // CART FUNCTIONS (ADD, REMOVE, RENDER)
-// ================================
+
 
 /**
  * Saves the current cart state to Local Storage.
@@ -351,4 +347,5 @@ updateCartCount();
 // Start the slider on page load
 window.onload = function() {
     showSlide(currentSlide);
+
 };
