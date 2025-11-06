@@ -3,161 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Little Lemon - Book a Table</title>
-    <!-- Tailwind CSS CDN for utility-first styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for the Inter font and any specific overrides */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #FDFCEE; /* Light yellow background, similar to lemon */
-            color: #333;
-        }
-
-        /* Modal styles - overlay */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black overlay */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000; /* Ensure it's on top of other content */
-        }
-
-        /* Modal styles - content box */
-        .modal-content {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 0.75rem; /* rounded-lg */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
-            max-width: 90%;
-            width: 400px;
-            text-align: center;
-            position: relative;
-            transform: scale(0.95); /* Slightly smaller initially */
-            opacity: 0; /* Hidden initially */
-            transition: all 0.3s ease-out; /* Smooth transition for appearance */
-        }
-
-        .modal-content.show {
-            transform: scale(1); /* Scale to normal size */
-            opacity: 1; /* Fully visible */
-        }
-
-        .modal-close-button {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: #6B7280; /* text-gray-500 */
-            cursor: pointer;
-            padding: 0.25rem;
-            line-height: 1;
-            transition: color 0.2s ease-in-out;
-        }
-
-        .modal-close-button:hover {
-            color: #374151; /* text-gray-700 */
-        }
-    </style>
-    <!-- Link to the external CSS file (for potential custom styles) -->
-    <link rel="stylesheet" href="style.css">
+    <title>Little Lemon Restaurant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css"> 
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-lg shadow-xl max-w-lg w-full transform transition-all hover:scale-105 duration-300">
-        <h1 class="text-4xl font-bold text-center mb-6 text-yellow-600">Book Your Table at Little Lemon</h1>
-        <p class="text-center text-gray-700 mb-8">
-            Experience the taste of fresh, zesty flavors. Reserve your spot today!
-        </p>
-
-        <form id="bookingForm" class="space-y-6">
-            <!-- Date Input -->
-            <div>
-                <label for="resDate" class="block text-sm font-medium text-gray-700 mb-1">Choose Date:</label>
-                <input type="date" id="resDate" name="resDate"
-                       min="2025-06-30" required
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out">
+<body>
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-header">
+            <h3>Your Order</h3>
+            <button class="close-cart-btn" id="closeCartBtn">×</button>
+        </div>
+        <div class="cart-items-list" id="cartItemsList">
+            <p class="empty-cart-message">Your cart is empty. Start adding some delicious food!</p>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Subtotal:</span>
+                <span id="cartTotal">$0.00</span>
             </div>
-
-            <!-- Time Input -->
-            <div>
-                <label for="resTime" class="block text-sm font-medium text-gray-700 mb-1">Choose Time:</label>
-                <select id="resTime" name="resTime" required
-                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out">
-                    <option value="">Select a time</option>
-                    <option value="17:00">17:00</option>
-                    <option value="18:00">18:00</option>
-                    <option value="19:00">19:00</option>
-                    <option value="20:00">20:00</option>
-                    <option value="21:00">21:00</option>
-                    <option value="22:00">22:00</option>
-                </select>
-            </div>
-
-            <!-- Number of Guests Input -->
-            <div>
-                <label for="guests" class="block text-sm font-medium text-gray-700 mb-1">Number of Guests:</label>
-                <input type="number" id="guests" name="guests"
-                       placeholder="1-10" min="1" max="10" required
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out">
-            </div>
-
-            <!-- Occasion Input -->
-            <div>
-                <label for="occasion" class="block text-sm font-medium text-gray-700 mb-1">Occasion:</label>
-                <select id="occasion" name="occasion"
-                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out">
-                    <option value="">Select an occasion (optional)</option>
-                    <option value="birthday">Birthday</option>
-                    <option value="anniversary">Anniversary</option>
-                    <option value="engagement">Engagement</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition duration-150 ease-in-out transform hover:scale-105 active:scale-100">
-                Find a Table
-            </button>
-        </form>
-
-        <!-- Message Box for General Confirmation/Errors -->
-        <div id="messageBox" class="mt-6 p-4 rounded-md text-center hidden"></div>
-
-        <!-- Table Suggestions Container -->
-        <div id="tableSuggestionsContainer" class="mt-8 pt-6 border-t border-gray-200 hidden">
-            <h2 class="text-2xl font-bold text-center mb-4 text-yellow-600">Available Tables</h2>
-            <div id="tableOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Table suggestions will be dynamically inserted here by JavaScript -->
-            </div>
-            <button id="resetBookingButton"
-                    class="mt-6 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">
-                Start New Search
-            </button>
+            <button class="btn btn-primary checkout-btn">Proceed to Checkout</button>
         </div>
     </div>
+    <div class="cart-overlay" id="cartOverlay"></div>
 
-    <!-- Booking Confirmation Modal -->
-    <div id="bookingConfirmationModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button class="modal-close-button" onclick="closeModal()">×</button>
-            <h2 class="text-3xl font-bold text-green-600 mb-4">Booking Confirmed!</h2>
-            <p id="modalMessage" class="text-gray-700 text-lg mb-6"></p>
-            <p class="text-sm text-gray-500">
-                Thank you for choosing Little Lemon. We look forward to serving you!
-            </p>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">🍋</span>
+                <span class="logo-text">Little Lemon</span>
+            </div>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#order-online">Order Online</a></li>
+                <li><a href="#reservation">Reservation</a></li>
+                <li><a href="#" class="login-btn">Login</a></li>
+                <li class="cart-link-item">
+                    <button class="cart-icon-btn" id="openCartBtn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </button>
+                </li>
+            </ul>
+
+            <button class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
-    </div>
+    </nav>
 
-    <!-- Link to the external JavaScript file -->
+    <section id="home" class="hero">
+        <div class="hero-slider">
+            <div class="slide active">
+                <div class="slide-content">
+                    <h1>Welcome to Little Lemon</h1>
+                    <p>Experience the finest Mediterranean cuisine in Chicago</p>
+                    <a href="#reservation" class="btn btn-primary">Reserve a Table</a>
+                </div>
+            </div>
+
+            <div class="slide">
+                <div class="slide-content">
+                    <h1>Fresh & Authentic</h1>
+                    <p>Made with love using traditional family recipes</p>
+                    <a href="#order-online" class="btn btn-primary">Order Online</a>
+                </div>
+            </div>
+
+            <div class="slide">
+                <div class="slide-content">
+                    <h1>Unforgettable Dining</h1>
+                    <p>Creating memories one meal at a time</p>
+                    <a href="#about" class="btn btn-primary">Learn More</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="slider-dots">
+            <span class="dot active" data-slide="0"></span>
+            <span class="dot" data-slide="1"></span>
+            <span class="dot" data-slide="2"></span>
+        </div>
+    </section>
+
+    <section class="action-cards">
+        <div class="container">
+            <div class="card">
+                <div class="card-icon">🍽️</div>
+                <h3>Our Menu</h3>
+                <p>Explore our delicious Mediterranean dishes</p>
+                <a href="#order-online" class="card-link">Order Now →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📅</div>
+                <h3>Book a Table</h3>
+                <p>Reserve your spot for an amazing experience</p>
+                <a href="#reservation" class="card-link">Make Reservation →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📍</div>
+                <h3>Visit Us</h3>
+                <p>Find us in the heart of Chicago</p>
+                <a href="#contact" class="card-link">Get Directions →</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title">A Taste of the Mediterranean</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>Little Lemon is a family-owned Mediterranean restaurant focused on traditional recipes served with a modern twist. We believe in fresh, high-quality ingredients sourced locally whenever possible.</p>
+                    <p>Our commitment to authentic flavors and warm hospitality ensures every visit is a memorable experience. From our signature Greek Salad to our rich Lemon Chicken, we invite you to share our passion for good food.</p>
+                    <a href="#contact" class="btn btn-primary">Meet Our Team</a>
+                </div>
+                <div class="about-image">
+                    <img src="https://placehold.co/400x300/495e57/ffffff?text=Little+Lemon+Chef" alt="Chef preparing food">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="order-online" class="menu">
+        <div class="container">
+            <h2 class="section-title">Order Online</h2>
+
+            <div class="menu-grid">
+                <div class="menu-item" data-id="1" data-name="Greek Salad" data-price="12.99">
+                    <div class="menu-image">🥗</div>
+                    <h3>Greek Salad</h3>
+                    <p>Fresh vegetables, feta cheese, and olives with our signature dressing</p>
+                    <span class="price">$12.99</span>
+                    <button class="btn add-to-cart-btn" data-id="1">Add to Cart</button>
+                </div>
+
+                <div class="menu-item" data-id="2" data-name="Lemon Chicken" data-price="18.99">
+                    <div class="menu-image">🍋</div>
+                    <h3>Lemon Chicken</h3>
+                    <p>Grilled chicken marinated in lemon and herbs, served with rice</p>
+                    <span class="price">$18.99</span>
+                    <button class="btn add-to-cart-btn" data-id="2">Add to Cart</button>
+                </div>
+
+                <div class="menu-item" data-id="3" data-name="Bruschetta" data-price="9.99">
+                    <div class="menu-image">🥙</div>
+                    <h3>Bruschetta</h3>
+                    <p>Toasted bread topped with tomatoes, garlic, and basil</p>
+                    <span class="price">$9.99</span>
+                    <button class="btn add-to-cart-btn" data-id="3">Add to Cart</button>
+                </div>
+
+                <div class="menu-item" data-id="4" data-name="Pasta Primavera" data-price="16.99">
+                    <div class="menu-image">🍝</div>
+                    <h3>Pasta Primavera</h3>
+                    <p>Fresh pasta with seasonal vegetables in a light sauce</p>
+                    <span class="price">$16.99</span>
+                    <button class="btn add-to-cart-btn" data-id="4">Add to Cart</button>
+                </div>
+
+                <div class="menu-item" data-id="5" data-name="Lemon Cake" data-price="7.99">
+                    <div class="menu-image">🍰</div>
+                    <h3>Lemon Cake</h3>
+                    <p>Homemade lemon cake with a sweet glaze</p>
+                    <span class="price">$7.99</span>
+                    <button class="btn add-to-cart-btn" data-id="5">Add to Cart</button>
+                </div>
+
+                <div class="menu-item" data-id="6" data-name="Fresh Lemonade" data-price="4.99">
+                    <div class="menu-image">🥤</div>
+                    <h3>Fresh Lemonade</h3>
+                    <p>Made fresh daily with organic lemons</p>
+                    <span class="price">$4.99</span>
+                    <button class="btn add-to-cart-btn" data-id="6">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="reservation" class="reservation">
+        <div class="container">
+            <h2 class="section-title">Reserve a Table</h2>
+
+            <form class="reservation-form" id="reservationForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="time">Time</label>
+                        <input type="time" id="time" name="time" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="guests">Number of Guests</label>
+                        <select id="guests" name="guests" required>
+                            <option value="">Select...</option>
+                            <option value="1">1 Guest</option>
+                            <option value="2">2 Guests</option>
+                            <option value="3">3 Guests</option>
+                            <option value="4">4 Guests</option>
+                            <option value="5">5 Guests</option>
+                            <option value="6+">6+ Guests</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Special Requests (Optional)</label>
+                    <textarea id="message" name="message" rows="4"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Book Now</button>
+            </form>
+
+            <div class="success-message" id="successMessage">
+                <span class="check-icon">✓</span>
+                <p>Your reservation has been confirmed! We'll send you an email shortly.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Contact Us</h2>
+
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="info-item">
+                        <div class="info-icon">📍</div>
+                        <div>
+                            <h4>Address</h4>
+                            <p>123 Mediterranean Ave<br>Chicago, IL 60601</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">📞</div>
+                        <div>
+                            <h4>Phone</h4>
+                            <p>(312) 555-0123</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">⏰</div>
+                        <div>
+                            <h4>Hours</h4>
+                            <p>Mon-Fri: 11am - 10pm<br>Sat-Sun: 10am - 11pm</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">✉️</div>
+                        <div>
+                            <h4>Email</h4>
+                            <p>info@littlelemon.com</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="map-placeholder">
+                    <p>🗺️ Map Location</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Little Lemon</h3>
+                    <p>Bringing authentic Mediterranean flavors to Chicago since 1995.</p>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#order-online">Order Online</a></li>
+                        <li><a href="#reservation">Reservations</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link">Facebook</a>
+                        <a href="#" class="social-link">Instagram</a>
+                        <a href="#" class="social-link">Twitter</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 Little Lemon Restaurant. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
     <script src="script.js"></script>
 </body>
 </html>

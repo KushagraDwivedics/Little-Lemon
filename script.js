@@ -1,188 +1,354 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const bookingForm = document.getElementById('bookingForm');
-    const messageBox = document.getElementById('messageBox');
-    const resDateInput = document.getElementById('resDate');
-    const tableSuggestionsContainer = document.getElementById('tableSuggestionsContainer');
-    const tableOptionsDiv = document.getElementById('tableOptions');
-    const resetBookingButton = document.getElementById('resetBookingButton');
+// ================================
+// GLOBAL STATE & INITIALIZATION
+// ================================
 
-    const bookingConfirmationModal = document.getElementById('bookingConfirmationModal');
-    const modalMessage = document.getElementById('modalMessage');
+// Load cart state from local storage or initialize as empty array
+let cart = JSON.parse(localStorage.getItem('littleLemonCart')) || [];
 
-    // Store current booking details for table selection
-    let currentBookingDetails = {};
+// ================================
+// DOM ELEMENT REFERENCES
+// ================================
 
-    // Set minimum date to today
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-    const dd = String(today.getDate()).padStart(2, '0');
-    resDateInput.min = `${yyyy}-${mm}-${dd}`;
+const menuToggle = document.getElementById('menuToggle');
+const navMenu = document.getElementById('navMenu');
+const reservationForm = document.getElementById('reservationForm');
+const successMessage = document.getElementById('successMessage');
+const navbar = document.querySelector('.navbar');
+const logo = document.querySelector('.logo');
+const slides = document.querySelectorAll('.slide');
+const dots = document.querySelectorAll('.dot');
+const menuItems = document.querySelectorAll('.menu-item');
+const dateInput = document.getElementById('date');
 
-    // Function to display general messages (errors, initial success before suggestions)
-    function showMessage(message, type) {
-        messageBox.textContent = message;
-        messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-blue-100', 'text-blue-800');
-        if (type === 'success') {
-            messageBox.classList.add('bg-green-100', 'text-green-800');
-        } else if (type === 'error') {
-            messageBox.classList.add('bg-red-100', 'text-red-800');
-        } else if (type === 'info') {
-            messageBox.classList.add('bg-blue-100', 'text-blue-800');
-        }
-        // Hide after 5 seconds, unless it's a critical error
-        if (type !== 'error') {
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 5000);
-        }
-    }
+// Cart specific elements
+const cartModal = document.getElementById('cartModal');
+const cartOverlay = document.getElementById('cartOverlay');
+const openCartBtn = document.getElementById('openCartBtn');
+const closeCartBtn = document.getElementById('closeCartBtn');
+const cartCountElement = document.getElementById('cartCount');
+const cartItemsList = document.getElementById('cartItemsList');
+const cartTotalElement = document.getElementById('cartTotal');
+const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
 
-    // Function to simulate fetching available tables
-    function simulateAvailableTables(date, time, guests) {
-        // In a real application, this would be an API call to your backend
-        // For demonstration, we'll return some dummy data based on inputs
-        const availableTables = [];
-        const numGuests = parseInt(guests);
 
-        // Simple logic to suggest tables based on guests
-        if (numGuests <= 2) {
-            availableTables.push({ id: 'A1', capacity: 2, location: 'Window Side', description: 'Cozy table for two with a view.' });
-            availableTables.push({ id: 'A2', capacity: 2, location: 'Bar Area', description: 'Lively spot near the bar.' });
-        } else if (numGuests <= 4) {
-            availableTables.push({ id: 'B1', capacity: 4, location: 'Main Dining', description: 'Standard table in the main area.' });
-            availableTables.push({ id: 'B2', capacity: 4, location: 'Patio', description: 'Outdoor seating (weather permitting).' });
-        } else if (numGuests <= 6) {
-            availableTables.push({ id: 'C1', capacity: 6, location: 'Private Nook', description: 'Secluded spot for a small group.' });
-        } else {
-            // For larger groups, less specific tables
-            availableTables.push({ id: 'D1', capacity: 8, location: 'Large Booth', description: 'Spacious booth for a group.' });
-            availableTables.push({ id: 'D2', capacity: 10, location: 'Celebration Zone', description: 'Perfect for events.' });
-        }
+// ================================
+// CART FUNCTIONS (ADD, REMOVE, RENDER)
+// ================================
 
-        // Add some random availability if needed
-        if (Math.random() > 0.8) { // 20% chance of no tables
-            return [];
-        }
+/**
+ * Saves the current cart state to Local Storage.
+ */
+function saveCart() {
+    localStorage.setItem('littleLemonCart', JSON.stringify(cart));
+}
 
-        return availableTables;
-    }
+/**
+ * Updates the visible cart count bubble and triggers a bounce animation.
+ */
+function updateCartCount() {
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    cartCountElement.textContent = totalItems;
 
-    // Function to display table suggestions
-    function displayTableSuggestions(tables) {
-        tableOptionsDiv.innerHTML = ''; // Clear previous suggestions
-        tableSuggestionsContainer.classList.remove('hidden');
-        bookingForm.classList.add('hidden'); // Hide the booking form
-
-        if (tables.length === 0) {
-            tableOptionsDiv.innerHTML = '<p class="text-center text-gray-600">No tables available for the selected criteria. Please try different options.</p>';
-            showMessage('No tables found. Please try different date/time/guests.', 'info');
-            return;
-        }
-
-        tables.forEach(table => {
-            const tableCard = document.createElement('div');
-            tableCard.classList.add('bg-yellow-50', 'p-4', 'rounded-md', 'shadow-sm', 'border', 'border-yellow-200', 'flex', 'flex-col', 'items-center', 'justify-between', 'transform', 'hover:scale-105', 'transition-all', 'duration-200');
-
-            tableCard.innerHTML = `
-                <h3 class="text-xl font-semibold text-yellow-700 mb-2">Table ${table.id}</h3>
-                <p class="text-gray-700 mb-1">Capacity: ${table.capacity} guests</p>
-                <p class="text-gray-600 text-sm mb-3">${table.location}</p>
-                <p class="text-gray-500 text-xs text-center mb-4">${table.description}</p>
-                <button data-table-id="${table.id}"
-                        class="select-table-btn w-full py-2 px-4 rounded-md bg-yellow-500 text-white font-medium hover:bg-yellow-600 transition duration-150 ease-in-out">
-                    Select This Table
-                </button>
-            `;
-            tableOptionsDiv.appendChild(tableCard);
-        });
-
-        // Add event listeners to the new 'Select This Table' buttons
-        document.querySelectorAll('.select-table-btn').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const tableId = event.target.dataset.tableId;
-                // Find the selected table details from the original tables array
-                const selectedTable = tables.find(t => t.id === tableId);
-                handleTableSelection(selectedTable);
-            });
-        });
-        showMessage('Please choose one of the available tables below.', 'info');
-    }
-
-    // Function to handle table selection and show confirmation modal
-    function handleTableSelection(selectedTable) {
-        tableSuggestionsContainer.classList.add('hidden'); // Hide suggestions
-        showMessage('Booking in progress...', 'info'); // Provide feedback
-
-        // Simulate final booking process (e.g., API call to confirm table reservation)
+    if (totalItems > 0) {
+        cartCountElement.classList.add('visible', 'bouncing');
+        // Remove bouncing class after animation finishes (0.5s)
         setTimeout(() => {
-            const finalMessage = `
-                Your booking for ${currentBookingDetails.guests} guests
-                on ${currentBookingDetails.date} at ${currentBookingDetails.time}
-                is confirmed for Table ${selectedTable.id} (${selectedTable.location}).
-                ${currentBookingDetails.occasion ? `Occasion: ${currentBookingDetails.occasion}.` : ''}
-            `;
-            modalMessage.innerHTML = finalMessage;
-            showModal(); // Display the confirmation modal
-            bookingForm.reset(); // Reset the original form
-            messageBox.classList.add('hidden'); // Hide general message box
-        }, 1500); // Simulate network delay
+            cartCountElement.classList.remove('bouncing');
+        }, 500);
+    } else {
+        cartCountElement.classList.remove('visible');
+    }
+}
+
+/**
+ * Handles adding an item to the cart.
+ * @param {string} itemId - The ID of the item to add.
+ */
+function addToCart(itemId) {
+    const itemElement = document.querySelector(`.menu-item[data-id="${itemId}"]`);
+    if (!itemElement) return;
+
+    const name = itemElement.dataset.name;
+    const price = parseFloat(itemElement.dataset.price);
+
+    // Check if item already exists in cart
+    const existingItem = cart.find(item => item.id === itemId);
+
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ id: itemId, name: name, price: price, quantity: 1 });
     }
 
-    // Functions for the modal (show and hide)
-    function showModal() {
-        bookingConfirmationModal.classList.remove('hidden');
-        // Add a class for the animation
-        bookingConfirmationModal.querySelector('.modal-content').classList.add('show');
+    saveCart();
+    renderCart();
+    updateCartCount();
+    console.log(`Added ${name} to cart. Cart:`, cart);
+}
+
+/**
+ * Changes the quantity of an item in the cart.
+ * @param {string} itemId - The ID of the item.
+ * @param {number} delta - The change in quantity (+1 or -1).
+ */
+function changeQuantity(itemId, delta) {
+    const item = cart.find(i => i.id === itemId);
+
+    if (item) {
+        item.quantity += delta;
+
+        if (item.quantity <= 0) {
+            // Remove item if quantity drops to zero or below
+            cart = cart.filter(i => i.id !== itemId);
+        }
     }
 
-    // This function needs to be globally accessible for the onclick in HTML
-    window.closeModal = function() {
-        bookingConfirmationModal.querySelector('.modal-content').classList.remove('show');
-        setTimeout(() => {
-            bookingConfirmationModal.classList.add('hidden');
-        }, 300); // Allow time for fade-out animation
-    };
+    saveCart();
+    renderCart();
+    updateCartCount();
+}
 
-    // Event listener for form submission (Find a Table)
-    bookingForm.addEventListener('submit', (event) => {
-        event.preventDefault(); // Prevent default form submission
+/**
+ * Renders the cart items in the cart modal list.
+ */
+function renderCart() {
+    cartItemsList.innerHTML = '';
+    let total = 0;
 
-        // Get form values
-        const resDate = resDateInput.value;
-        const resTime = document.getElementById('resTime').value;
-        const guests = document.getElementById('guests').value;
-        const occasion = document.getElementById('occasion').value;
+    if (cart.length === 0) {
+        cartItemsList.innerHTML = '<p class="empty-cart-message">Your cart is empty. Start adding some delicious food!</p>';
+        cartTotalElement.textContent = '$0.00';
+        return;
+    }
 
-        // Simple validation
-        if (!resDate || !resTime || !guests) {
-            showMessage('Please fill in all required fields (Date, Time, Number of Guests).', 'error');
-            return;
-        }
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
 
-        if (parseInt(guests) < 1 || parseInt(guests) > 10) {
-            showMessage('Number of guests must be between 1 and 10.', 'error');
-            return;
-        }
-
-        // Store details for later use when selecting a specific table
-        currentBookingDetails = {
-            date: resDate,
-            time: resTime,
-            guests: guests,
-            occasion: occasion || 'Not specified'
-        };
-
-        // Simulate finding tables and display them
-        const foundTables = simulateAvailableTables(resDate, resTime, guests);
-        displayTableSuggestions(foundTables);
+        const cartItemHTML = `
+            <div class="cart-item">
+                <div class="item-details">
+                    <h4>${item.name}</h4>
+                    <p>$${item.price.toFixed(2)} x ${item.quantity} = $${itemTotal.toFixed(2)}</p>
+                </div>
+                <div class="quantity-controls">
+                    <button data-id="${item.id}" data-action="decrease">-</button>
+                    <span>${item.quantity}</span>
+                    <button data-id="${item.id}" data-action="increase">+</button>
+                    <button class="remove-item-btn" data-id="${item.id}">X</button>
+                </div>
+            </div>
+        `;
+        cartItemsList.insertAdjacentHTML('beforeend', cartItemHTML);
     });
 
-    // Event listener for the "Start New Search" button
-    resetBookingButton.addEventListener('click', () => {
-        tableSuggestionsContainer.classList.add('hidden');
-        bookingForm.classList.remove('hidden'); // Show the booking form again
-        messageBox.classList.add('hidden'); // Hide any messages
-        bookingForm.reset(); // Clear the form
+    cartTotalElement.textContent = `$${total.toFixed(2)}`;
+}
+
+/**
+ * Toggles the visibility of the cart modal and overlay.
+ * @param {boolean} open - true to open, false to close.
+ */
+function toggleCart(open) {
+    if (open) {
+        renderCart(); // Render fresh cart every time it opens
+        cartModal.classList.add('open');
+        cartOverlay.style.display = 'block';
+        // Fade in overlay
+        setTimeout(() => cartOverlay.style.opacity = '1', 10);
+    } else {
+        cartModal.classList.remove('open');
+        cartOverlay.style.opacity = '0';
+        // Hide overlay after animation
+        setTimeout(() => cartOverlay.style.display = 'none', 400);
+    }
+}
+
+
+// ================================
+// EVENT LISTENERS
+// ================================
+
+// 1. Mobile Menu Toggle
+menuToggle.addEventListener('click', () => {
+    navMenu.classList.toggle('active');
+});
+
+// Close menu when user clicks on a navigation link (on mobile)
+const navLinks = document.querySelectorAll('.nav-menu a');
+navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        navMenu.classList.remove('active');
     });
 });
+
+// 2. Add to Cart Button Listeners
+addToCartButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+        const itemId = e.target.dataset.id;
+        addToCart(itemId);
+    });
+});
+
+// 3. Cart Modal Toggle Listeners
+openCartBtn.addEventListener('click', () => toggleCart(true));
+closeCartBtn.addEventListener('click', () => toggleCart(false));
+cartOverlay.addEventListener('click', () => toggleCart(false)); // Close when clicking overlay
+
+// 4. Cart Item Controls Listener (Delegation)
+cartItemsList.addEventListener('click', (e) => {
+    const target = e.target;
+    const itemId = target.dataset.id;
+    const action = target.dataset.action;
+
+    if (target.classList.contains('remove-item-btn')) {
+        // Remove item logic
+        cart = cart.filter(i => i.id !== itemId);
+        saveCart();
+        renderCart();
+        updateCartCount();
+    } else if (itemId && action) {
+        if (action === 'increase') {
+            changeQuantity(itemId, 1);
+        } else if (action === 'decrease') {
+            changeQuantity(itemId, -1);
+        }
+    }
+});
+
+
+// 5. Hero Slider (Image Carousel)
+let currentSlide = 0;
+function showSlide(slideIndex) {
+    slides.forEach(slide => slide.classList.remove('active'));
+    dots.forEach(dot => dot.classList.remove('active'));
+    slides[slideIndex].classList.add('active');
+    dots[slideIndex].classList.add('active');
+}
+function nextSlide() {
+    currentSlide++;
+    if (currentSlide >= slides.length) {
+        currentSlide = 0;
+    }
+    showSlide(currentSlide);
+}
+// Automatically change slides every 5 seconds
+setInterval(nextSlide, 5000);
+dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+        currentSlide = index;
+        showSlide(currentSlide);
+    });
+});
+
+
+// 6. Smooth Scrolling for Navigation
+const smoothScrollLinks = document.querySelectorAll('a[href^="#"]');
+smoothScrollLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href');
+        if (targetId !== '#' && targetId.length > 1) {
+            const targetSection = document.querySelector(targetId);
+            targetSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+
+// 7. Reservation Form Handling
+reservationForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        guests: document.getElementById('guests').value,
+        message: document.getElementById('message').value
+    };
+    console.log('Reservation submitted:', formData);
+
+    reservationForm.style.display = 'none';
+    successMessage.classList.add('show');
+
+    setTimeout(() => {
+        successMessage.classList.remove('show');
+        reservationForm.style.display = 'block';
+        reservationForm.reset();
+    }, 5000);
+});
+
+
+// 8. Navbar Scroll Effect
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 100) {
+        navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.15)';
+    } else {
+        navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+    }
+});
+
+
+// 9. Menu Items Animation on Scroll
+function isElementInViewport(element) {
+    const rect = element.getBoundingClientRect();
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+}
+
+function animateMenuItems() {
+    menuItems.forEach((item, index) => {
+        if (isElementInViewport(item)) {
+            setTimeout(() => {
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            }, index * 100);
+        }
+    });
+}
+
+// Initial hiding for animation effect
+menuItems.forEach(item => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateY(30px)';
+    item.style.transition = 'opacity 0.5s ease, transform 0.5s ease, box-shadow 0.3s ease';
+});
+
+window.addEventListener('scroll', animateMenuItems);
+// Run on load to check visible elements
+animateMenuItems();
+
+
+// 10. Set Minimum Date for Reservation
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, '0');
+const day = String(today.getDate()).padStart(2, '0');
+const formattedDate = `${year}-${month}-${day}`;
+dateInput.setAttribute('min', formattedDate);
+
+
+// 11. Logo Click to Scroll to Top
+logo.addEventListener('click', () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});
+
+// Final initialization: Load cart and update count on page load
+renderCart();
+updateCartCount();
+
+// Start the slider on page load
+window.onload = function() {
+    showSlide(currentSlide);
+};
