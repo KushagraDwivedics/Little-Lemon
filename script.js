@@ -161,9 +161,9 @@ function toggleCart(open) {
 }
 
 
-// ================================
+
 // EVENT LISTENERS
-// ================================
+
 
 // 1. Mobile Menu Toggle
 menuToggle.addEventListener('click', () => {
@@ -347,5 +347,4 @@ updateCartCount();
 // Start the slider on page load
 window.onload = function() {
     showSlide(currentSlide);
-
 };
